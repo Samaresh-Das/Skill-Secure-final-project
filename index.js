@@ -148,6 +148,8 @@ app.post("/place_order", (req, res) => {
   const status = "not paid";
   const date = new Date();
   let products_ids = "";
+  const id = Date.now();
+  req.session.order_id = id;
 
   const con = mysql.createConnection({
     host: "localhost",
@@ -166,9 +168,20 @@ app.post("/place_order", (req, res) => {
       console.log(err);
     } else {
       const query =
-        "INSERT INTO orders(cost, name, email, status, city, address, phone, date, products_ids) VALUES ?";
+        "INSERT INTO orders(id, cost, name, email, status, city, address, phone, date, products_ids) VALUES ?";
       const values = [
-        [cost, name, email, status, city, address, phone, date, products_ids],
+        [
+          id,
+          cost,
+          name,
+          email,
+          status,
+          city,
+          address,
+          phone,
+          date,
+          products_ids,
+        ],
       ];
       con.query(query, [values], (err, result) => {
         for (let i = 0; i < cart.length; i++) {
@@ -194,8 +207,73 @@ app.post("/place_order", (req, res) => {
 });
 
 app.get("/payment", (req, res) => {
-  const total = req.session.total
-  res.render("pages/payment", {total});
+  const total = req.session.total;
+  res.render("pages/payment", { total });
+});
+
+app.get("/verify_payment", function (req, res) {
+  var transaction_id = req.query.transaction_id;
+  var order_id = req.session.order_id;
+
+  var con = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "node_project",
+  });
+
+  con.connect((err) => {
+    if (err) {
+      console.log(err);
+    } else {
+      var query =
+        "INSERT INTO payments (order_id,transaction_id,date) VALUES ?";
+      var values = [[order_id, transaction_id, new Date()]];
+      con.query(query, [values], (err, result) => {
+        con.query(
+          "UPDATE orders SET status='paid' WHERE id='" + order_id + "'",
+          (err, result) => {}
+        );
+        res.redirect("/thank_you");
+      });
+    }
+  });
+});
+
+app.get("/thank_you", (req, res) => {
+  let order_id = req.session.order_id;
+  res.render("pages/thank_you", { order_id });
+});
+
+app.get("/single_product", (req, res) => {
+  const id = req.query.id;
+  let con = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "node project",
+  });
+
+  con.query("SELECT * FROM products WHERE id='" + id + "'", (err, result) => {
+    res.render("pages/single_product", { result });
+  });
+});
+
+app.get("/products", (req, res) => {
+  let con = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "node project",
+  });
+
+  con.query("SELECT * FROM products", (err, result) => {
+    res.render("pages/products", { result });
+  });
+});
+
+app.get("/about", (req, res) => {
+  res.render("pages/about");
 });
 
 app.listen(port, () => {

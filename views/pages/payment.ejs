@@ -159,7 +159,7 @@
     <section class="cart container mt-2 my-3 py-5">
       <div class="container mt-2 text-center">
         <h4>Payment</h4>
-        <h2>Total: $ <%= total %> </h2>
+        <h2>Total: $ <%= total %></h2>
         <div id="paypal-button-container"></div>
       </div>
     </section>
@@ -271,7 +271,7 @@
           purchase_units: [
             {
               amount: {
-                value: '<%= total %>', // Can also reference a variable or function
+                value: "<%= total %>", // Can also reference a variable or function
               },
             },
           ],
@@ -303,6 +303,8 @@
           // element.innerHTML = '<h3>Thank you for your payment!</h3>';
 
           // Or go to another URL:  actions.redirect('thank_you.html');
+          windows.location.href =
+            "/verify_payment?transaction_id=" + transaction.id;
         });
       },
     })
